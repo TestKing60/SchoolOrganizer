@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Study Bloom · College Planner</title>
+<style>
+:root{
+ --paper:#fffdf7; --paper2:#fbf8ef; --ink:#394052; --muted:#858895;
+ --pink:#e7bcc4; --pink2:#f4dfe2; --blue:#b9d6df; --green:#c8dfd0;
+ --yellow:#f1dfad; --lav:#d8cce7; --line:#dbe4e8; --border:#d9d2c8;
+}
+*{box-sizing:border-box}
+body{margin:0;background:linear-gradient(135deg,#e9e4dc 0%,#e5e9e8 100%);color:var(--ink);font-family:Georgia,"Times New Roman",serif}
+button,input,textarea,select{font:inherit}
+button{cursor:pointer}
+.hidden{display:none!important}
+
+/* ---------- PAPER / NOTEBOOK ---------- */
+.paper{
+ background-color:var(--paper);
+ background-image:
+  linear-gradient(rgba(184,211,221,.55) 1px,transparent 1px),
+  linear-gradient(90deg,rgba(184,211,221,.55) 1px,transparent 1px);
+ background-size:22px 22px;
+ position:relative;
+}
+.paper:before{
+ content:"";position:absolute;top:0;bottom:0;left:62px;width:2px;
+ background:rgba(218,145,158,.48);pointer-events:none
+}
+.sheet{
+ width:min(1200px,calc(100% - 30px));min-height:calc(100vh - 30px);
+ margin:15px auto;background:var(--paper);
+ box-shadow:0 10px 35px rgba(55,50,45,.16);
+ position:relative;overflow:hidden
+}
+
+/* ---------- AUTH ---------- */
+.auth{min-height:100vh;display:grid;place-items:center;padding:20px}
+.auth-card{
+ width:min(480px,100%);padding:42px 42px 42px 78px;
+ background-color:var(--paper);
+ background-image:linear-gradient(rgba(184,211,221,.55) 1px,transparent 1px);
+ background-size:100% 24px;
+ border:1px solid var(--border);box-shadow:7px 10px 25px rgba(60,55,50,.14);
+ position:relative
+}
+.auth-card:before{content:"";position:absolute;left:51px;top:0;bottom:0;width:2px;background:#dfaeb8}
+.brand{font-size:36px;font-weight:700;margin-bottom:4px}
+.subtitle{color:var(--muted);margin-bottom:26px}
+.tabs{display:flex;gap:5px;margin-bottom:20px}
+.tabs button{border:0;background:#eee8df;padding:9px 14px;color:var(--ink)}
+.tabs button.active{background:var(--pink2);border-bottom:2px solid #c68f9a}
+label{display:block;font-size:12px;color:#6f7280;margin:12px 0 5px}
+input,textarea,select{
+ width:100%;padding:10px 11px;border:1px solid #d4d9d9;
+ background:rgba(255,255,255,.7);color:var(--ink);border-radius:2px;outline:none
+}
+textarea{min-height:110px;resize:vertical}
+.primary,.btn{
+ border:1px solid #cfc7be;background:#fffaf0;color:var(--ink);
+ padding:9px 13px;border-radius:2px
+}
+.primary{width:100%;background:#465064;color:white;margin-top:15px}
+.hint{font-size:11px;color:var(--muted);line-height:1.5;margin-top:15px}
+
+/* ---------- APP ---------- */
+.app{display:none}
+.topbar{
+ min-height:64px;background:#faf7ef;border-bottom:1px solid #cfc8be;
+ display:flex;align-items:center;justify-content:space-between;padding:0 28px
+}
+.logo{font-size:24px;font-weight:700}
+.user-pill{font-size:12px;background:#eee8df;padding:6px 9px;margin-right:7px}
+.layout{display:grid;grid-template-columns:205px 1fr}
+.sidebar{background:#f4f0e8;border-right:1px solid #d1c9bf;padding:25px 12px}
+.nav{display:grid;gap:3px}
+.nav button{
+ text-align:left;border:0;background:transparent;padding:10px 12px;color:var(--ink);
+ border-left:3px solid transparent
+}
+.nav button:hover{background:#eee8df}
+.nav button.active{background:#e9dfe0;border-left-color:#c78e9a}
+.main{padding:34px 38px;min-width:0}
+h1{font-size:34px;margin:0 0 5px}
+h2{font-size:23px;margin:0 0 12px}
+h3{margin:0 0 8px}
+.lead{color:var(--muted);margin:0 0 24px}
+.view{display:none}.view.active{display:block}
+.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:20px}
+.span4{grid-column:span 4}.span6{grid-column:span 6}.span8{grid-column:span 8}.span12{grid-column:span 12}
+
+/* ---------- NOTEBOOK CARDS ---------- */
+.card{
+ background:rgba(255,253,247,.92);border:1px solid #ddd5cb;
+ padding:21px 24px;position:relative;box-shadow:2px 3px 8px rgba(65,58,52,.06)
+}
+.card:before{
+ content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--pink)
+}
+.card.blue:before{background:var(--blue)}
+.card.green:before{background:var(--green)}
+.card.yellow:before{background:var(--yellow)}
+.card.lav:before{background:var(--lav)}
+.small{font-size:12px;color:var(--muted)}
+.stat{font-size:34px;font-weight:bold}
+.actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:13px}
+
+/* ---------- NOTES ---------- */
+.notes-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:18px}
+.note{
+ padding:18px 20px;min-height:150px;border:1px solid #d8d0c5;
+ box-shadow:3px 5px 9px rgba(55,50,45,.10);position:relative
+}
+.note:nth-child(4n+1){background:#fff4cf}
+.note:nth-child(4n+2){background:#e5f1ea}
+.note:nth-child(4n+3){background:#eee7f5}
+.note:nth-child(4n){background:#f7e2e4}
+.note:after{
+ content:"";position:absolute;right:13px;top:-8px;width:42px;height:17px;
+ background:rgba(255,255,255,.55);transform:rotate(2deg)
+}
+.note h3{font-size:18px}.note p{white-space:pre-wrap;line-height:1.5;font-size:14px}
+
+/* ---------- SCHEDULE ---------- */
+.table-wrap{overflow:auto}
+.schedule{border-collapse:collapse;width:100%;min-width:760px;background:#fffdf8}
+.schedule th,.schedule td{border:1px solid #ccd8dc;padding:7px;vertical-align:top}
+.schedule th{background:#eaf1f3;font-size:12px}
+.lesson{min-height:62px;padding:9px;background:#e7f1f3;border-left:4px solid var(--blue)}
+.schedule td:nth-child(3) .lesson{background:#f7e6e7;border-left-color:var(--pink)}
+.schedule td:nth-child(4) .lesson{background:#e9f2ea;border-left-color:var(--green)}
+.schedule td:nth-child(5) .lesson{background:#eee9f5;border-left-color:var(--lav)}
+.schedule td:nth-child(6) .lesson{background:#fff4d5;border-left-color:var(--yellow)}
+.lesson small{display:block;color:#727786;margin-top:4px}
+
+/* ---------- GRADES / TASKS ---------- */
+.grade-row{display:grid;grid-template-columns:1.5fr .6fr .7fr 1fr auto;gap:9px;align-items:center;padding:8px 0;border-bottom:1px dashed #d5d0c8}
+.up{color:#4c8662}.down{color:#a35f67}.flat{color:#817c88}
+.counter{display:flex;align-items:center;gap:15px}
+.counter strong{font-size:52px}
+.counter button{width:42px;height:42px;border:1px solid #cfc8be;background:#fff;border-radius:50%}
+.tag{font-size:10px;background:#eee7df;padding:4px 7px;margin-left:5px}
+.progress{height:7px;background:#ebe5dd}.progress i{display:block;height:100%;background:#a8c8d1}
+
+/* ---------- FOOTER ---------- */
+footer{text-align:center;padding:18px;color:#8b8b94;font-size:11px}
+
+/* ---------- MOBILE ---------- */
+@media(max-width:850px){
+ .sheet{width:100%;min-height:100vh;margin:0}.layout{grid-template-columns:1fr}
+ .sidebar{border-right:0;border-bottom:1px solid #d1c9bf;padding:8px}
+ .nav{display:flex;overflow:auto}.nav button{white-space:nowrap}
+ .main{padding:28px 20px}.main:before{left:27px}
+ .span4,.span6,.span8{grid-column:span 12}
+ .grade-row{grid-template-columns:1fr 1fr}
+ .topbar{padding:0 14px}.user-pill{display:none}
+}
+</style>
+
+<style id="mobile-upgrade">
+/* ===== MOBILE-FIRST ORGANIZATION UPGRADE ===== */
+html{scroll-behavior:smooth}
+body{overflow-x:hidden}
+.topbar{position:sticky;top:0;z-index:50}
+.main{padding:28px 28px 95px}
+.view{animation:fadeIn .16s ease}
+@keyframes fadeIn{from{opacity:.5;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+.mobile-title{display:none}
+.section-head{display:flex;align-items:end;justify-content:space-between;gap:15px;margin-bottom:18px}
+.section-head .lead{margin:0}
+
+.card{margin-bottom:0}
+.card + .card{margin-top:0}
+
+.quick-actions{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:0 0 20px}
+.quick-actions button{min-height:48px;background:#fffdf7;border:1px solid #d8d1c7;border-radius:3px;color:var(--ink);box-shadow:0 2px 5px rgba(55,50,45,.06)}
+.quick-actions button:nth-child(1){background:#f7e2e4}
+.quick-actions button:nth-child(2){background:#e7f1f3}
+.quick-actions button:nth-child(3){background:#e9f2ea}
+.quick-actions button:nth-child(4){background:#eee9f5}
+
+.bottom-nav{display:none}
+
+.mobile-stack{display:grid;gap:14px}
+.mobile-stack .card{margin:0}
+
+.schedule-mobile-note{display:none}
+
+@media(max-width:850px){
+  body{background:#e7e2da}
+  .sheet{width:100%;margin:0;box-shadow:none;min-height:100vh}
+  .topbar{min-height:58px;padding:0 15px}
+  .logo{font-size:20px}
+  .topbar .btn{padding:8px 10px;font-size:12px}
+  .layout{display:block}
+  .sidebar{display:none}
+  .main{padding:22px 14px 88px}
+  .main:before{left:20px;opacity:.65}
+  .main h1{font-size:28px;padding-left:9px}
+  .lead{font-size:13px;padding-left:9px;margin-bottom:18px}
+  .grid{display:grid;grid-template-columns:1fr;gap:12px}
+  .span4,.span6,.span8,.span12{grid-column:1}
+  .card{padding:18px 17px;margin:0}
+  .card:before{width:3px}
+  .section-head{display:block;margin-bottom:15px}
+  .section-head h1{margin-bottom:5px}
+
+  /* dashboard becomes a simple vertical notebook page */
+  #home .grid{gap:12px}
+  #home .card{min-height:auto}
+  #home .card:first-child{background:#fffdf7}
+  #home .card:nth-child(2){background:#f2f7f8}
+  #home .card:nth-child(3){background:#edf6ef}
+  #home .card:nth-child(4){background:#fff7df}
+  #home .card:nth-child(5){background:#f1edf7}
+
+  .counter strong{font-size:43px}
+  .counter{justify-content:center}
+  .counter button{width:46px;height:46px}
+
+  input,textarea,select{font-size:16px;min-height:44px}
+  textarea{min-height:125px}
+  .btn,.primary{min-height:44px;padding:10px 13px}
+  .actions{gap:8px}
+  .actions .btn{flex:1}
+
+  /* notes */
+  .notes-grid{grid-template-columns:1fr;gap:12px}
+  .note{min-height:135px;padding:17px}
+
+  /* schedule: keep it usable by giving it its own horizontal scroll area */
+  .schedule-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .schedule{min-width:650px;font-size:12px}
+  .schedule th,.schedule td{padding:5px}
+  .lesson{min-height:58px;padding:8px;font-size:12px}
+  .lesson small{font-size:10px}
+
+  /* grades */
+  .grade-row{grid-template-columns:1fr auto auto;gap:7px}
+  .grade-row strong{grid-column:1}
+  .grade-row span:nth-child(2){grid-column:2}
+  .grade-row span:nth-child(3){grid-column:3}
+  .grade-row span:nth-child(4){grid-column:1}
+  .grade-row button{grid-column:3;grid-row:1}
+
+  /* tasks */
+  #taskList>div{min-height:52px}
+  #taskList input[type=checkbox]{width:22px;height:22px}
+
+  /* bottom mobile navigation */
+  .bottom-nav{
+    position:fixed;display:grid;grid-template-columns:repeat(5,1fr);
+    left:0;right:0;bottom:0;height:68px;background:rgba(250,248,242,.97);
+    border-top:1px solid #d1c9bf;z-index:100;box-shadow:0 -4px 15px rgba(50,45,40,.08)
+  }
+  .bottom-nav button{
+    border:0;background:transparent;color:#6e7180;font-size:10px;padding:5px 2px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px
+  }
+  .bottom-nav button.active{color:#a15f6b;background:#f7e6e8}
+  .bottom-nav b{font-size:19px;font-weight:400;line-height:1}
+
+  footer{padding:12px 10px 82px}
+
+  .auth{padding:12px}
+  .auth-card{padding:30px 25px 30px 45px}
+  .auth-card:before{left:29px}
+}
+
+@media(min-width:851px){
+  .main{padding-bottom:50px}
+}
+
+/* tablet/phone: make every important action easy to tap */
+@media(max-width:600px){
+  .topbar .user-pill{display:none}
+  .logo{font-size:18px}
+  .main{padding-left:12px;padding-right:12px}
+  .main:before{left:18px}
+  .card{padding:16px 15px}
+  .quick-actions{grid-template-columns:repeat(2,1fr)}
+  .grade-row{font-size:13px}
+}
+</style>
+
+
+<style id="final-polish">
+*{transition:background-color .18s ease,border-color .18s ease,box-shadow .18s ease,transform .18s ease}
+.card,.note,.auth-card,.sheet{border-radius:7px}
+.card{box-shadow:0 5px 14px rgba(55,50,45,.07)}
+.card:hover{box-shadow:0 8px 18px rgba(55,50,45,.09)}
+.btn:hover,.primary:hover{transform:translateY(-1px);box-shadow:0 3px 8px rgba(55,50,45,.10)}
+input:focus,textarea:focus,select:focus{border-color:#b9d6df;box-shadow:0 0 0 3px rgba(185,214,223,.22)}
+.nav button,.bottom-nav button{transition:all .16s ease}
+.note{border-radius:4px}
+.chat-list{display:flex;flex-direction:column;gap:10px;max-height:390px;overflow:auto;padding:5px}
+.chat-msg{max-width:82%;padding:10px 13px;border:1px solid #d9d2c8;line-height:1.4;font-size:14px}
+.chat-msg.me{align-self:flex-end;background:#f4dfe2}
+.chat-msg.other{align-self:flex-start;background:#e8f1f3}
+.chat-time{font-size:9px;color:#8a8b93;margin-top:4px}
+.feature-list{display:grid;gap:10px}
+.feature-item{display:flex;align-items:center;gap:12px;padding:12px;background:#fffdf7;border:1px solid #ddd6cc}
+.feature-icon{width:38px;height:38px;display:grid;place-items:center;background:#f0e8df;font-size:19px}
+.calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.calendar-grid div{min-height:40px;padding:5px;text-align:center;border:1px solid #dfe5e5;background:#fffdf7;font-size:12px}
+.calendar-grid .head{background:#eaf1f3;font-weight:bold;min-height:30px}
+.calendar-grid .today{background:#f4dfe2;border-color:#d4a1aa;font-weight:bold}
+.study-meter{height:12px;background:#ece7df;overflow:hidden}
+.study-meter i{display:block;height:100%;background:linear-gradient(90deg,#b9d6df,#c8dfd0)}
+.chat-compose{display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:10px}
+@media(max-width:600px){
+ .chat-compose{grid-template-columns:1fr}
+ .chat-compose .btn{width:100%}
+ .calendar-grid div{min-height:34px;font-size:10px}
+}
+</style>
+
+
+<style id="mobile-only-final">
+/* STUDY BLOOM — MOBILE / TABLET ONLY */
+html,body{width:100%;max-width:100%;overflow-x:hidden}
+body{background:#e9e5de}
+.sheet{width:100%;min-height:100svh;margin:0;box-shadow:none}
+.topbar{height:58px;min-height:58px;padding:0 14px}
+.layout{display:block}
+.sidebar{display:none}
+.main{width:100%;padding:18px 12px calc(92px + env(safe-area-inset-bottom));min-height:calc(100svh - 58px)}
+.main:before{left:18px;opacity:.5}
+.main h1{font-size:27px;line-height:1.1;padding-left:8px;margin-bottom:4px}
+.lead{font-size:13px;padding-left:8px;margin-bottom:16px}
+.grid{display:grid;grid-template-columns:1fr;gap:12px}
+.span4,.span6,.span8,.span12{grid-column:1}
+.card{padding:16px 15px;border-radius:8px;box-shadow:0 3px 10px rgba(55,50,45,.06)}
+.card:before{width:3px}
+.quick-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:0 0 14px}
+.quick-actions button{min-height:54px;border-radius:8px}
+input,textarea,select{font-size:16px;min-height:46px;border-radius:7px}
+textarea{min-height:120px}
+.btn,.primary{min-height:44px;border-radius:7px}
+.actions{gap:7px}
+.actions .btn{flex:1}
+.notes-grid{grid-template-columns:1fr;gap:11px}
+.note{min-height:130px;border-radius:7px}
+.table-wrap{width:100%;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;border-radius:7px}
+.schedule{min-width:650px}
+.schedule th,.schedule td{padding:5px}
+.lesson{min-height:62px;border-radius:5px}
+.grade-row{grid-template-columns:minmax(0,1fr) auto auto;gap:7px}
+.grade-row strong{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.counter{justify-content:center}
+.chat-list{max-height:none;min-height:220px}
+.chat-msg{max-width:88%;border-radius:12px}
+.chat-compose{grid-template-columns:1fr;position:sticky;bottom:74px;background:#fffdf7;padding-top:8px}
+.chat-compose .btn{width:100%}
+.calendar-grid{gap:3px}
+.calendar-grid div{min-height:38px;padding:4px;font-size:11px;border-radius:4px}
+.calendar-grid .head{min-height:27px}
+.bottom-nav{
+ position:fixed;left:0;right:0;bottom:0;z-index:999;
+ display:grid;grid-template-columns:repeat(4,1fr);
+ height:calc(70px + env(safe-area-inset-bottom));
+ padding:4px 5px env(safe-area-inset-bottom);
+ background:rgba(250,248,242,.98);
+ backdrop-filter:blur(12px);
+ border-top:1px solid #cfc8be;
+ box-shadow:0 -5px 20px rgba(50,45,40,.12)
+}
+.bottom-nav button{
+ min-width:0;border:0;border-radius:8px;background:transparent;
+ color:#727582;font-size:10px;padding:4px 1px;
+ display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px
+}
+.bottom-nav button.active{background:#f2e1e4;color:#9c5e69}
+.bottom-nav b{font-size:18px;font-weight:400;line-height:1}
+.bottom-nav button:nth-child(n+5){display:none}
+.bottom-more{
+ display:flex!important;align-items:center;justify-content:center;
+ position:absolute;right:8px;top:-38px;width:38px;height:38px;
+ border-radius:50%!important;background:#fffdf7!important;
+ border:1px solid #d8d0c5!important;box-shadow:0 2px 7px #0001
+}
+footer{padding-bottom:12px}
+@media(min-width:601px) and (max-width:1100px){
+ .main{padding:24px 24px calc(96px + env(safe-area-inset-bottom))}
+ .grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .span4,.span6,.span8{grid-column:span 1}
+ .span12{grid-column:1/-1}
+ .quick-actions{grid-template-columns:repeat(4,1fr)}
+ .bottom-nav{grid-template-columns:repeat(7,1fr);height:72px}
+ .bottom-nav button:nth-child(n){display:flex}
+ .bottom-more{display:none!important}
+}
+@media(max-width:600px){
+ .topbar .user-pill{display:none}
+ .logo{font-size:18px}
+ .quick-actions button:nth-child(n+5){display:none}
+}
+</style>
+
+
+<style>
+.mobile-more{
+ position:fixed;right:10px;bottom:82px;z-index:998;display:none;
+ width:min(250px,calc(100vw - 20px));padding:8px;
+ background:#fffdf7;border:1px solid #d8d0c5;border-radius:12px;
+ box-shadow:0 8px 25px #0002
+}
+.mobile-more.open{display:grid;gap:4px}
+.mobile-more button{
+ border:0;background:transparent;text-align:left;padding:12px;border-radius:8px;color:#4b4e5b
+}
+.mobile-more button:hover,.mobile-more button.active{background:#f3e2e4}
+</style>
+
+</head>
+<body>
+
+<section id="auth" class="auth">
+ <div class="auth-card">
+  <div class="brand">Study Bloom ✿</div>
+  <div class="subtitle">Dein kleiner Collegeblock für die Schule.</div>
+  <div class="tabs">
+   <button id="loginTab" class="active" onclick="switchAuth('login')">Login</button>
+   <button id="registerTab" onclick="switchAuth('register')">Registrieren</button>
+  </div>
+  <form onsubmit="authSubmit(event)">
+   <label id="nameLabel" class="hidden">Name</label>
+   <input id="nameInput" class="hidden" placeholder="Dein Name">
+   <label>E-Mail</label>
+   <input id="emailInput" type="email" required placeholder="name@schule.de">
+   <label>Passwort</label>
+   <input id="passwordInput" type="password" minlength="4" required placeholder="••••••••">
+   <button class="primary" id="authButton">Einloggen</button>
+  </form>
+  <div class="hint">Alles wird lokal in deinem Browser gespeichert. Über „Einstellungen“ kannst du deine Daten zusätzlich als Datei sichern.</div>
+ </div>
+</section>
+
+<div id="app" class="app">
+ <div class="sheet paper">
+  <header class="topbar">
+   <div class="logo">Study Bloom ✿</div>
+   <div><span id="userPill" class="user-pill"></span><button class="btn" onclick="logout()">Abmelden</button></div>
+  </header>
+
+  <div class="layout">
+   <aside class="sidebar">
+    <div class="nav">
+     <button class="active" onclick="showView('home',this)">⌂ Übersicht</button>
+     <button onclick="showView('notes',this)">✎ Notizen</button>
+     <button onclick="showView('schedule',this)">▦ Stundenplan</button>
+     <button onclick="showView('grades',this)">♡ Noten</button>
+     <button onclick="showView('attendance',this)">✓ Aufzeigen</button>
+     <button onclick="showView('tasks',this)">☷ Aufgaben</button>
+     <button onclick="showView('calendar',this)">◫ Kalender</button>
+     <button onclick="showView('chat',this)">☵ Chat</button>
+     <button onclick="showView('tracker',this)">◉ Lerntracker</button>
+     <button onclick="showView('settings',this)">⚙ Daten</button>
+    </div>
+   </aside>
+
+   <main class="main">
+
+    <section id="home" class="view active">
+     <h1>Hallo, <span id="helloName">Lernmensch</span> ♡</h1>
+     <p class="lead">Ein kurzer Blick auf deinen Schultag.</p>
+     
+<div class="quick-actions">
+ <button onclick="showView('notes')">✎<br>Notizen</button>
+ <button onclick="showView('schedule')">▦<br>Stundenplan</button>
+ <button onclick="showView('grades')">♡<br>Noten</button>
+ <button onclick="showView('tasks')">☷<br>Aufgaben</button>
+ <button onclick="showView('calendar')">◫<br>Kalender</button>
+ <button onclick="showView('chat')">☵<br>Chat</button>
+ <button onclick="showView('tracker')">◉<br>Lernen</button>
+</div>
+<div class="grid">
+      <div class="card span4">
+       <h3>Heute</h3><div id="todayText"></div>
+       <div class="actions"><button class="btn" onclick="showView('tasks')">Aufgaben →</button></div>
+      </div>
+      <div class="card blue span4">
+       <h3>Notenschnitt</h3><div class="stat" id="avgGrade">–</div>
+       <div class="small">aus deinen eingetragenen Noten</div>
+      </div>
+      <div class="card green span4">
+       <h3>Aufzeigen heute</h3>
+       <div class="counter"><button onclick="changeCounter(-1)">−</button><strong id="counterValue">0</strong><button onclick="changeCounter(1)">+</button></div>
+      </div>
+      <div class="card yellow span6">
+       <h2>Heute auf dem Zettel</h2>
+       <textarea id="dailyText" placeholder="Lernen, Abgeben, Mitnehmen ..."></textarea>
+       <div class="actions"><button class="btn" onclick="saveDaily()">Eintragen</button></div>
+      </div>
+      <div class="card lav span6">
+       <h2>Heutiger Stundenplan</h2><div id="todaySchedule"></div>
+      </div>
+     </div>
+    </section>
+
+    <section id="notes" class="view">
+     <h1>Notizen</h1><p class="lead">Wie kleine Zettel in deinem Collegeblock.</p>
+     <div class="card" style="margin-bottom:20px">
+      <div class="grid">
+       <div class="span4"><label>Titel</label><input id="noteTitle" placeholder="Bio Prüfung"></div>
+       <div class="span8"><label>Notiz</label><textarea id="noteBody" placeholder="Gedanken, Lernstoff, Erinnerungen ..."></textarea></div>
+      </div>
+      <div class="actions"><button class="btn" onclick="addNote()">+ Notiz anheften</button></div>
+     </div>
+     <div id="notesGrid" class="notes-grid"></div>
+    </section>
+
+    <section id="schedule" class="view">
+     <h1>Stundenplan</h1><p class="lead">Einfach auf eine Stunde klicken und sie beschriften.</p>
+     <div class="card">
+ <div class="actions" style="margin-top:0;margin-bottom:12px">
+  <button class="btn" onclick="addScheduleLesson()">+ Stunde hinzufügen</button>
+  <span class="small">Tipp: Eine Zelle antippen, um sie zu bearbeiten. Mit leerem Fach wird sie gelöscht.</span>
+ </div>
+ <div class="table-wrap schedule-wrap"><table class="schedule">
+      <thead><tr><th>Std.</th><th>Montag</th><th>Dienstag</th><th>Mittwoch</th><th>Donnerstag</th><th>Freitag</th></tr></thead>
+      <tbody id="scheduleBody"></tbody>
+     </table></div></div>
+    </section>
+
+    <section id="grades" class="view">
+     <h1>Noten</h1><p class="lead">Noten eintragen und deine Tendenz im Blick behalten.</p>
+     <div class="card" style="margin-bottom:20px">
+      <div class="grid">
+       <div class="span4"><label>Fach</label><input id="gradeSubject" placeholder="Mathe"></div>
+       <div class="span4"><label>Note</label><input id="gradeValue" type="number" min="1" max="6" step=".1" placeholder="2.0"></div>
+       <div class="span4"><label>Gewichtung</label><input id="gradeWeight" type="number" min="1" value="1"></div>
+      </div>
+      <div class="actions"><button class="btn" onclick="addGrade()">+ Note eintragen</button></div>
+     </div>
+     <div class="card"><div id="gradesList"></div></div>
+    </section>
+
+    <section id="attendance" class="view">
+     <h1>Aufzeigen</h1><p class="lead">Deine Wortmeldungen für heute.</p>
+     <div class="card">
+      <div class="counter"><button onclick="changeCounter(-1)">−</button><strong id="counterBig">0</strong><button onclick="changeCounter(1)">+</button></div>
+      <p class="small">Der Wert wird automatisch nach Datum getrennt gespeichert.</p>
+      <button class="btn" onclick="resetCounter()">Heute zurücksetzen</button>
+     </div>
+    </section>
+
+    <section id="tasks" class="view">
+     <h1>Aufgaben</h1><p class="lead">Was muss noch von der Liste?</p>
+     <div class="card" style="margin-bottom:20px">
+      <div class="grid">
+       <div class="span8"><label>Aufgabe</label><input id="taskInput" placeholder="Mathe-Arbeitsblatt fertig machen ..."></div>
+       <div class="span4"><label>Fällig</label><input id="taskDate" type="date"></div>
+      </div>
+      <div class="actions"><button class="btn" onclick="addTask()">+ Aufgabe</button></div>
+     </div>
+     <div class="card"><div id="taskList"></div></div>
+    </section>
+
+    
+<section id="calendar" class="view">
+ <h1>Kalender</h1><p class="lead">Deine Schultage auf einen Blick.</p>
+ <div class="grid">
+  <div class="card span8">
+   <h2 id="calendarTitle">Monat</h2>
+   <div id="calendarGrid" class="calendar-grid"></div>
+  </div>
+  <div class="card blue span4">
+   <h2>Heute</h2>
+   <div id="calendarToday"></div>
+   <div class="actions"><button class="btn" onclick="showView('tasks')">Aufgaben →</button></div>
+  </div>
+ </div>
+</section>
+
+<section id="chat" class="view">
+ <h1>Schulchat</h1><p class="lead">Ein kleiner lokaler Chat für Notizen, Ideen und Nachrichten an dich selbst.</p>
+ <div class="card">
+  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
+   <span id="chatStatus" class="tag">Lokaler Chat</span>
+   <button class="btn" onclick="connectGlobalChat()">Globalen Chat verbinden</button>
+  </div>
+  <div class="small" style="margin-bottom:10px">Für einen echten globalen Chat braucht die Seite einen WebSocket-/Backend-Server. Ohne Server bleibt der Chat lokal gespeichert.</div>
+  <div id="chatList" class="chat-list"></div>
+  <div class="chat-compose">
+   <input id="chatInput" placeholder="Nachricht schreiben ..." onkeydown="if(event.key==='Enter')sendChat()">
+   <button class="btn" onclick="sendChat()">Senden</button>
+  </div>
+ </div>
+</section>
+
+<section id="tracker" class="view">
+ <h1>Lerntracker</h1><p class="lead">Halte deine Lernzeit für heute fest.</p>
+ <div class="grid">
+  <div class="card green span6">
+   <h2>Heute gelernt</h2>
+   <div class="counter"><button onclick="changeStudy(-15)">−</button><strong id="studyMinutes">0</strong><button onclick="changeStudy(15)">+</button></div>
+   <div class="small">Minuten · Schritte à 15 Minuten</div>
+  </div>
+  <div class="card yellow span6">
+   <h2>Tagesziel</h2>
+   <label>Ziel in Minuten</label>
+   <input id="studyGoal" type="number" min="15" step="15" value="60" onchange="saveStudyGoal()">
+   <div class="progress" style="margin-top:15px"><i id="studyProgress" style="width:0%"></i></div>
+   <div id="studyProgressText" class="small"></div>
+  </div>
+ </div>
+</section>
+
+<section id="settings" class="view">
+     <h1>Daten</h1><p class="lead">Dein Collegeblock bleibt auf diesem Gerät.</p>
+     <div class="card">
+      <h3>Sicherung</h3><p class="small">Exportiere deinen kompletten Planer als JSON-Datei oder importiere ein Backup.</p>
+      <div class="actions">
+       <button class="btn" onclick="exportData()">↓ Exportieren</button>
+       <label class="btn" style="display:inline-block;cursor:pointer">↑ Importieren<input type="file" accept=".json" style="display:none" onchange="importData(event)"></label>
+       <button class="btn" onclick="clearAll()">Alle Daten löschen</button>
+      </div>
+     </div>
+    </section>
+
+   </main>
+   
+<nav class="bottom-nav" id="bottomNav">
+ <button data-view="home" onclick="mobileNav('home',this)"><b>⌂</b>Home</button>
+ <button data-view="notes" onclick="mobileNav('notes',this)"><b>✎</b>Notizen</button>
+ <button data-view="schedule" onclick="mobileNav('schedule',this)"><b>▦</b>Plan</button>
+ <button data-view="more" onclick="toggleMobileMore(this)"><b>＋</b>Mehr</button>
+</nav>
+<div id="mobileMore" class="mobile-more" aria-hidden="true">
+ <button data-view="grades" onclick="mobileNav('grades',this);toggleMobileMore()">♡ Noten</button>
+ <button data-view="tasks" onclick="mobileNav('tasks',this);toggleMobileMore()">☷ Aufgaben</button>
+ <button data-view="calendar" onclick="mobileNav('calendar',this);toggleMobileMore()">◫ Kalender</button>
+ <button data-view="chat" onclick="mobileNav('chat',this);toggleMobileMore()">☵ Chat</button>
+ <button data-view="tracker" onclick="mobileNav('tracker',this);toggleMobileMore()">◉ Lernen</button>
+ <button data-view="attendance" onclick="mobileNav('attendance',this);toggleMobileMore()">✓ Aufzeigen</button>
+ <button data-view="settings" onclick="mobileNav('settings',this);toggleMobileMore()">⚙ Daten</button>
+</div>
+
+  </div>
+  <footer>Study Bloom · Collegeblock Edition · lokal gespeichert ✿</footer>
+ </div>
+</div>
+
+<script>
+const USER_KEY='studyBloomCollegeUsers_v2',SESSION_KEY='studyBloomCollegeSession_v2';
+let mode='login',data=null;
+
+function users(){return JSON.parse(localStorage.getItem(USER_KEY)||'{}')}
+function saveUsers(x){localStorage.setItem(USER_KEY,JSON.stringify(x))}
+function blank(name,email){
+ return {name,email,notes:[],grades:[],tasks:[],daily:{},counter:0,counterDate:'',
+ schedule:Array.from({length:8},()=>Array(5).fill(null)),chat:[],study:{minutes:0,date:'',goal:60}}
+}
+function switchAuth(m){
+ mode=m;loginTab.classList.toggle('active',m==='login');registerTab.classList.toggle('active',m==='register');
+ nameLabel.classList.toggle('hidden',m!=='register');nameInput.classList.toggle('hidden',m!=='register');
+ authButton.textContent=m==='login'?'Einloggen':'Konto erstellen'
+}
+function authSubmit(e){
+ e.preventDefault();let email=emailInput.value.trim().toLowerCase(),pass=passwordInput.value,u=users();
+ if(mode==='register'){
+  if(u[email])return alert('Für diese E-Mail gibt es bereits ein Konto.');
+  u[email]={password:pass,data:blank(nameInput.value.trim()||'Lernmensch',email)};saveUsers(u)
+ }else if(!u[email]||u[email].password!==pass)return alert('E-Mail oder Passwort stimmt nicht.');
+ localStorage.setItem(SESSION_KEY,email);load(email)
+}
+function load(email){
+ data=users()[email].data;auth.classList.add('hidden');app.style.display='block';
+ userPill.textContent=data.email;helloName.textContent=data.name||'Lernmensch';renderAll()
+}
+function persist(){let email=localStorage.getItem(SESSION_KEY),u=users();if(!u[email])return;u[email].data=data;saveUsers(u)}
+function logout(){localStorage.removeItem(SESSION_KEY);location.reload()}
+
+function mobileNav(id,btn){
+ showView(id);
+ document.querySelectorAll('.bottom-nav button[data-view]').forEach(b=>b.classList.remove('active'));
+ document.querySelectorAll('.mobile-more button').forEach(b=>b.classList.toggle('active',b.dataset.view===id));
+ const main=document.querySelector('.bottom-nav button[data-view="'+id+'"]');
+ if(main)main.classList.add('active');
+ window.scrollTo({top:0,behavior:'smooth'});
+}
+function toggleMobileMore(){
+ const m=document.getElementById('mobileMore');
+ if(m)m.classList.toggle('open');
+}
+
+function showView(id,btn){
+ document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+ const target=document.getElementById(id);
+ if(!target)return;
+ target.classList.add('active');
+ document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));
+ if(btn)btn.classList.add('active');
+ if(id==='calendar')renderCalendar();
+ if(id==='chat')renderChat();
+ if(id==='tracker')renderTracker();
+}
+function today(){return new Date().toISOString().slice(0,10)}
+function changeCounter(n){
+ if(data.counterDate!==today()){data.counter=0;data.counterDate=today()}
+ data.counter=Math.max(0,data.counter+n);persist();renderCounter()
+}
+function resetCounter(){data.counter=0;data.counterDate=today();persist();renderCounter()}
+function renderCounter(){counterValue.textContent=data.counter;counterBig.textContent=data.counter}
+function saveDaily(){data.daily[today()]=dailyText.value;persist();alert('Eintrag gespeichert ✿')}
+function addNote(){
+ let t=noteTitle.value.trim(),b=noteBody.value.trim();if(!t&&!b)return;
+ data.notes.unshift({id:Date.now(),t:t||'Notiz',b});noteTitle.value='';noteBody.value='';persist();renderNotes()
+}
+function delNote(id){data.notes=data.notes.filter(n=>n.id!==id);persist();renderNotes()}
+function renderNotes(){
+ notesGrid.innerHTML=data.notes.length?data.notes.map(n=>`<article class="note"><h3>${esc(n.t)}</h3><p>${esc(n.b)}</p><button class="btn" onclick="delNote(${n.id})">Löschen</button></article>`).join(''):'<div class="card"><span class="small">Noch keine Notizen.</span></div>'
+}
+function addGrade(){
+ let s=gradeSubject.value.trim(),v=parseFloat(gradeValue.value),w=parseFloat(gradeWeight.value)||1;
+ if(!s||isNaN(v)||v<1||v>6)return alert('Bitte Fach und Note zwischen 1 und 6 eingeben.');
+ data.grades.push({id:Date.now(),s,v,w});gradeSubject.value='';gradeValue.value='';persist();renderGrades()
+}
+function delGrade(id){data.grades=data.grades.filter(g=>g.id!==id);persist();renderGrades()}
+function trend(subject){
+ let a=data.grades.filter(g=>g.s===subject);if(a.length<2)return '<span class="flat">• neu</span>';
+ let prev=a[a.length-2].v,last=a[a.length-1].v;
+ return last<prev?'<span class="up">↗ besser</span>':last>prev?'<span class="down">↘ schlechter</span>':'<span class="flat">→ gleich</span>'
+}
+function renderGrades(){
+ let w=data.grades.reduce((a,g)=>a+g.w,0),avg=w?data.grades.reduce((a,g)=>a+g.v*g.w,0)/w:NaN;
+ avgGrade.textContent=isNaN(avg)?'–':avg.toFixed(2);
+ gradesList.innerHTML=data.grades.length?data.grades.map(g=>`<div class="grade-row"><strong>${esc(g.s)}</strong><span>${g.v.toFixed(1)}</span><span>× ${g.w}</span><span>${trend(g.s)}</span><button class="btn" onclick="delGrade(${g.id})">×</button></div>`).join(''):'<span class="small">Noch keine Noten.</span>'
+}
+function addTask(){
+ let t=taskInput.value.trim();if(!t)return;
+ data.tasks.push({id:Date.now(),t,d:taskDate.value,done:false});taskInput.value='';persist();renderTasks()
+}
+function toggleTask(id){let t=data.tasks.find(x=>x.id===id);if(t)t.done=!t.done;persist();renderTasks()}
+function delTask(id){data.tasks=data.tasks.filter(t=>t.id!==id);persist();renderTasks()}
+function renderTasks(){
+ taskList.innerHTML=data.tasks.length?data.tasks.map(t=>`<div style="display:flex;align-items:center;gap:9px;padding:9px 0;border-bottom:1px dashed #d5d0c8"><input type="checkbox" ${t.done?'checked':''} onchange="toggleTask(${t.id})" style="width:auto"><span style="flex:1;${t.done?'text-decoration:line-through;color:#999':''}">${esc(t.t)} ${t.d?'<span class="tag">'+t.d+'</span>':''}</span><button class="btn" onclick="delTask(${t.id})">×</button></div>`).join(''):'<span class="small">Keine Aufgaben.</span>'
+}
+function renderSchedule(){
+ if(!Array.isArray(data.schedule))data.schedule=[];
+ while(data.schedule.length<8)data.schedule.push(Array(5).fill(null));
+ data.schedule=data.schedule.map(row=>{
+   row=Array.isArray(row)?row.slice(0,5):[];
+   while(row.length<5)row.push(null);
+   return row;
+ });
+ scheduleBody.innerHTML=data.schedule.map((row,i)=>`<tr><th>${i+1}</th>${row.map((x,d)=>`<td><div class="lesson" onclick="editLesson(${i},${d})">${x?'<b>'+esc(x.subject)+'</b><small>'+esc(x.room||'')+' · '+esc(x.teacher||'')+'</small>':'<span class="small">+ eintragen</span>'}</div></td>`).join('')}</tr>`).join('');
+ persist();
+}
+function addScheduleLesson(){
+ let day=prompt('Wochentag (1=Mo, 2=Di, 3=Mi, 4=Do, 5=Fr):');
+ let d=parseInt(day,10)-1;
+ let period=parseInt(prompt('Stunde (1–8):'),10)-1;
+ if(d<0||d>4||period<0||period>7)return;
+ editLesson(period,d);
+}
+function editLesson(i,d){
+ let old=data.schedule[i]?.[d]||{};
+ let s=prompt('Fach:',old.subject||''); if(s===null)return;
+ if(!s.trim()){data.schedule[i][d]=null;persist();renderSchedule();renderHome();return;}
+ let r=prompt('Raum:',old.room||''); if(r===null)return;
+ let t=prompt('Lehrkraft:',old.teacher||''); if(t===null)return;
+ data.schedule[i][d]={subject:s.trim(),room:r.trim(),teacher:t.trim()};
+ persist();renderSchedule();renderHome();
+}
+function renderHome(){
+ let n=new Date(),day=(n.getDay()+6)%7;
+ todayText.innerHTML='<b>'+n.toLocaleDateString('de-DE',{weekday:'long',day:'2-digit',month:'long'})+'</b>';
+ dailyText.value=data.daily[today()]||'';renderCounter();
+ if(day<5){
+  let out=data.schedule.map((r,i)=>r[day]?`<div style="padding:8px 0;border-bottom:1px dashed #d5d0c8"><b>${i+1}. ${esc(r[day].subject)}</b><span class="small"> · ${esc(r[day].room||'')}</span></div>`:'').join('');
+  todaySchedule.innerHTML=out||'<span class="small">Noch nichts eingetragen.</span>'
+ }else todaySchedule.innerHTML='<span class="small">Wochenende ✿</span>'
+}
+
+
+let globalSocket=null;
+function connectGlobalChat(){
+ const endpoint=prompt('WebSocket-Server URL eingeben (z.B. wss://dein-server.example/chat):',localStorage.getItem('studyBloomChatEndpoint')||'');
+ if(!endpoint)return;
+ localStorage.setItem('studyBloomChatEndpoint',endpoint);
+ try{
+   if(globalSocket)globalSocket.close();
+   globalSocket=new WebSocket(endpoint);
+   globalSocket.onopen=()=>{chatStatus.textContent='Global verbunden';chatStatus.style.background='#dff0e4'};
+   globalSocket.onclose=()=>{chatStatus.textContent='Global getrennt';chatStatus.style.background='#eee7df'};
+   globalSocket.onerror=()=>{chatStatus.textContent='Verbindung fehlgeschlagen';chatStatus.style.background='#f5dfe1'};
+   globalSocket.onmessage=e=>{
+     try{
+       const msg=JSON.parse(e.data);
+       if(msg.text){
+         if(!data.chat)data.chat=[];
+         data.chat.push({id:Date.now()+Math.random(),text:msg.text,time:msg.time||new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'}),global:true});
+         persist();renderChat();
+       }
+     }catch{}
+   };
+ }catch{chatStatus.textContent='Verbindung fehlgeschlagen'}
+}
+function sendChat(){
+ let text=chatInput.value.trim();if(!text)return;
+ const message={text,time:new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})};
+ if(globalSocket&&globalSocket.readyState===1){
+   globalSocket.send(JSON.stringify(message));
+ }else{
+   if(!Array.isArray(data.chat))data.chat=[];
+   data.chat.push({id:Date.now(),text:message.text,time:message.time});
+   persist();renderChat();
+ }
+ chatInput.value='';
+}
+
+function renderChat(){
+ if(!Array.isArray(data.chat))data.chat=[];
+ chatList.innerHTML=data.chat.length?data.chat.map(m=>`<div class="chat-msg ${m.global?'other':'me'}"><div>${esc(m.text)}</div><div class="chat-time">${m.global?'Global · ':''}${m.time}</div></div>`).join(''):'<div class="small" style="padding:15px;text-align:center">Noch keine Nachrichten. Schreib dir selbst etwas ✿</div>';
+ chatList.scrollTop=chatList.scrollHeight;
+}
+function studyToday(){
+ if(!data.study)data.study={minutes:0,date:'',goal:60};
+ if(data.study.date!==today()){data.study.minutes=0;data.study.date=today();}
+ if(!data.study.goal)data.study.goal=60;
+}
+function changeStudy(n){studyToday();data.study.minutes=Math.max(0,data.study.minutes+n);persist();renderTracker()}
+function saveStudyGoal(){studyToday();data.study.goal=Math.max(15,parseInt(studyGoal.value,10)||60);persist();renderTracker()}
+function renderTracker(){
+ studyToday();studyMinutes.textContent=data.study.minutes;studyGoal.value=data.study.goal;
+ let pct=Math.min(100,Math.round(data.study.minutes/data.study.goal*100));
+ studyProgress.style.width=pct+'%';studyProgressText.textContent=data.study.minutes+' / '+data.study.goal+' Minuten · '+pct+'%';
+}
+function renderCalendar(){
+ let now=new Date(),y=now.getFullYear(),m=now.getMonth(),first=new Date(y,m,1),days=new Date(y,m+1,0).getDate();
+ calendarTitle.textContent=now.toLocaleDateString('de-DE',{month:'long',year:'numeric'});
+ let start=(first.getDay()+6)%7,out=['Mo','Di','Mi','Do','Fr','Sa','So'].map(x=>`<div class="head">${x}</div>`).join('');
+ for(let i=0;i<start;i++)out+='<div></div>';
+ for(let d=1;d<=days;d++){let cls=d===now.getDate()?'today':'';out+=`<div class="${cls}">${d}</div>`}
+ calendarGrid.innerHTML=out;
+ calendarToday.innerHTML='<b>'+now.toLocaleDateString('de-DE',{weekday:'long',day:'2-digit',month:'long'})+'</b>';
+}
+
+function renderAll(){renderHome();renderNotes();renderGrades();renderTasks();renderSchedule();renderChat();renderTracker();renderCalendar()}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
+function exportData(){
+ let blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),a=document.createElement('a');
+ a.href=URL.createObjectURL(blob);a.download='study-bloom-college-backup.json';a.click();URL.revokeObjectURL(a.href)
+}
+function importData(e){
+ let f=e.target.files[0];if(!f)return;let r=new FileReader();
+ r.onload=()=>{try{let x=JSON.parse(r.result);if(!x||!Array.isArray(x.notes))throw 0;data=x;if(!Array.isArray(data.chat))data.chat=[];if(!data.study)data.study={minutes:0,date:'',goal:60};if(!Array.isArray(data.schedule))data.schedule=[];persist();renderAll();alert('Backup importiert ✿')}catch{alert('Ungültige Backup-Datei.')}};r.readAsText(f)
+}
+function clearAll(){
+ if(confirm('Wirklich alle Daten dieses Kontos löschen?')){data=blank(data.name,data.email);persist();renderAll()}
+}
+(function(){
+ let email=localStorage.getItem(SESSION_KEY);
+ if(email&&users()[email])load(email);else switchAuth('login')
+})();
+</script>
+</body>
+</html>
